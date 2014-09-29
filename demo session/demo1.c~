@@ -1,0 +1,30 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+
+#define O_SESSION       04000000
+
+int main()
+{
+	int fd;
+	char *str = "You get a shiver in the dark";
+	
+	printf("Hi, I'm process %d\n", getpid());
+	
+	fd = open("sultans", O_WRONLY | O_CREAT | O_EXCL | O_SESSION);
+	if (fd < 0) {
+		printf("Error in file creation\n");
+		return -1;
+	}
+	
+	write(fd, str, strlen(str));
+	
+	if (close(fd)) {
+		printf("Close file failed\n");
+		return -1;
+	}
+	
+	return 0;
+	
+}

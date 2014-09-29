@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <sys/syscall.h>
+#include <sys/ipc.h>
+
+#define __NR_GET_BARRIER 314
+#define __NR_SLEEP_ON_BARRIER 315
+#define __NR_AWAKE_BARRIER 316
+#define __NR_RELEASE_BARRIER 317
+
+#define BAR_NUM		14234
+
+int main(void)
+{
+	long bd, b, res;
+	
+	bd = syscall(__NR_GET_BARRIER, BAR_NUM, IPC_CREAT | 0666);
+	if (bd < 0) {
+		printf("Parent: error in get_barrier\n");
+		return -1;
+	}
+	
+	if (fork()) {
+		//parent
+		printf("Parent: going to sleep\n");
+		sleep(10);
+		printf("Parent: wake up tag 12\n");
+		syscall(__NR_AWAKE_BARRIER, bd, 12);
+		sleep(1);
+		printf("Parent: wake up tag 24\n");
+		syscall(__NR_AWAKE_BARRIER, bd, 24);
+		sleep(1);
+		printf("Parent: releasing barrier\n");
+		syscall(__NR_RELEASE_BARRIER, bd);
+		return 0;
+	}
+	else {
+		if (fork()) {
+			if (fork()) {
+				//process 1
+				sleep(1);
+				bd = syscall(__NR_GET_BARRIER, BAR_NUM);
+				if (bd < 0) {
+					printf("Process 1: error in get_barrier\n");
+					return -1;
+				}
+				printf("Process 1: going to sleep\n");
+				syscall(__NR_SLEEP_ON_BARRIER, bd, 12);
+				printf("Process 1: just woke up\n");
+				return 0;
+			}
+			else {
+				//process 2
+				sleep(2);
+				bd = syscall(__NR_GET_BARRIER, BAR_NUM);
+				if (bd < 0) {
+					printf("Process 2: error in get_barrier\n");
+					return -1;
+				}
+				printf("Process 2: going to sleep\n");
+				syscall(__NR_SLEEP_ON_BARRIER, bd, 24);
+				printf("Process 2: just woke up\n");
+				return 0;
+			}
+		}
+		else {
+			if (fork()) {
+				if (fork()) {
+					//process 3
+					sleep(3);
+					bd = syscall(__NR_GET_BARRIER, BAR_NUM);
+					if (bd < 0) {
+						printf("Process 3: error in get_barrier\n");
+						return -1;
+					}
+					printf("Process 3: going to sleep\n");
+					syscall(__NR_SLEEP_ON_BARRIER, bd, 12);
+					printf("Process 3: just woke up\n");
+					return 0;
+				}
+				else {
+					//process 4
+					sleep(4);
+					bd = syscall(__NR_GET_BARRIER, BAR_NUM);
+					if (bd < 0) {
+						printf("Process 4: error in get_barrier\n");
+						return -1;
+					}
+					printf("Process 4: going to sleep\n");
+					syscall(__NR_SLEEP_ON_BARRIER, bd, 24);
+					printf("Process 4: just woke up\n");
+					return 0;
+				}
+				
+			}
+			else {
+				if (fork()) {
+					//process 5
+					sleep(5);
+					bd = syscall(__NR_GET_BARRIER, BAR_NUM);
+					if (bd < 0) {
+						printf("Process 5: error in get_barrier\n");
+						return -1;
+					}
+					printf("Process 5: going to sleep\n");
+					syscall(__NR_SLEEP_ON_BARRIER, bd, 17);
+					printf("Process 5: just woke up\n");
+					return 0;
+				}
+				else {
+					//process 6
+					sleep(6);
+					bd = syscall(__NR_GET_BARRIER, BAR_NUM);
+					if (bd < 0) {
+						printf("Process 6: error in get_barrier\n");
+						return -1;
+					}
+					printf("Process 6: going to sleep\n");
+					syscall(__NR_SLEEP_ON_BARRIER, bd, 17);
+					printf("Process 6: just woke up\n");
+					return 0;
+				}
+			}
+		}
+	}
+	
+	return 0;
+}
